@@ -14,7 +14,7 @@ interface LocalStorage {
 
     fun getTextFooter(): String?
 
-    fun updatePicture(picture : Bitmap)
+    fun updatePicture(picture: Bitmap)
 
     fun updateTextHeader(textHeader: String)
 
@@ -24,16 +24,20 @@ interface LocalStorage {
 
     fun updateTextFooter(textFooter: String)
 
-    fun getPrintedBlocksCounter() : Int
+    fun getPrintedBlocksCounter(): Int
 
     fun incrementPrintedBlocksCounter()
 
-    fun getUpdateBlockCounter() : Int
+    fun getUpdateBlockCounter(): Int
 
     fun incrementUpdateBlockCounter()
 
-    fun getUpdateFailureCounter() : Int
+    fun getUpdateFailureCounter(): Int
 
     fun incrementUpdateFailureCounter()
+
+    fun updatePlacement(placement: Int)
+
+    fun getPlacement(): Int
 
 }

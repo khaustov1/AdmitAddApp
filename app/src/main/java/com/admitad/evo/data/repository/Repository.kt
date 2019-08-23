@@ -21,6 +21,10 @@ interface Repository {
 
     fun updatePicture(picture : Bitmap)
 
+    fun updatePlacement(placement: Int)
+
+    fun getPlacement() : Int
+
     fun updateTextHeader(textHeader: String)
 
     fun updateTextCTA(textCTA: String)

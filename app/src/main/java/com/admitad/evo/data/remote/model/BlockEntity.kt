@@ -14,7 +14,9 @@ data class BlockEntity(
     @SerializedName("offer_link")
     val offerLink: String,
     @SerializedName("text_footer")
-    val textFooter: String?
+    val textFooter: String?,
+    @SerializedName("block_placement")
+    val blockPlacement: Int?
 )
 
 data class BlockResponse(

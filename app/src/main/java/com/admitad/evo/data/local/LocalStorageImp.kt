@@ -75,6 +75,11 @@ class LocalStorageImp(private val context: Context) : LocalStorage {
             null
         }
 
+    override fun updatePlacement(placement: Int) = saveInteger(BLOCK_PLACEMENT, placement)
+
+    override fun getPlacement(): Int = loadInteger(BLOCK_PLACEMENT)
+
+
     @SuppressLint("ApplySharedPref")
     private fun saveInteger(key: String, value: Int) {
         val sPref = context.getSharedPreferences(PREF_NAME, MODE_PRIVATE)
@@ -85,7 +90,7 @@ class LocalStorageImp(private val context: Context) : LocalStorage {
 
     private fun loadInteger(key: String): Int {
         val sPref = context.getSharedPreferences(PREF_NAME, MODE_PRIVATE)
-        return sPref.getInt(key, 0)
+        return sPref.getInt(key, -1)
     }
 
     @SuppressLint("ApplySharedPref")
@@ -112,6 +117,7 @@ class LocalStorageImp(private val context: Context) : LocalStorage {
         const val PRINTED_BLOCKS_COUNTER = "printed_blocks"
         const val UPDATE_BLOCK_COUNTER = "update_block"
         const val UPDATE_FAILURE_COUNTER = "update_failure"
+        const val BLOCK_PLACEMENT = "block_placement"
     }
 
 }

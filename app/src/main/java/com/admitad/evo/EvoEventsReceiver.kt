@@ -4,9 +4,16 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.admitad.evo.data.repository.ReceiptState
+import com.admitad.evo.data.repository.ReceiptStateRepository
+import com.admitad.evo.data.repository.Repository
 import com.admitad.evo.presentation.MainService
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
-class EvoEventsReceiver : BroadcastReceiver() {
+class EvoEventsReceiver : BroadcastReceiver(), KoinComponent {
+    private val repository: Repository by inject()
+    private val receiptStateRepository: ReceiptStateRepository by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
@@ -28,15 +35,30 @@ class EvoEventsReceiver : BroadcastReceiver() {
                 //Очистка чека возврата (создание нового чека).
             }
             "evotor.intent.action.receipt.sell.RECEIPT_CLOSED" -> {
-                context.startService(
-                    Intent(context, MainService::class.java)
-                        .putExtra(MainService.TASK_ID, MainService.PRINT_ADV_BLOCK)
-                )
+                receiptStateRepository.onReceiptStateChange(ReceiptState.RECEIPT_CLOSED)
+                if (!shouldPrintBeforeReceipt()) {
+                    context.startService(
+                        Intent(context, MainService::class.java)
+                            .putExtra(MainService.TASK_ID, MainService.PRINT_ADV_BLOCK)
+                    )
+                }
+            }
+            "evotor.intent.action.receipt.sell.POSITION_ADDED" -> {
+                if (receiptStateRepository.getReceiptState() == ReceiptState.POSITION_ADDED)
+                    return
+                receiptStateRepository.onReceiptStateChange(ReceiptState.POSITION_ADDED)
+                if (shouldPrintBeforeReceipt()) {
+                    context.startService(
+                        Intent(context, MainService::class.java)
+                            .putExtra(MainService.TASK_ID, MainService.PRINT_ADV_BLOCK)
+                    )
+                }
             }
             "evotor.intent.action.receipt.payback.RECEIPT_CLOSED" -> {
                 //Закрытие чека возврата.
             }
             "evotor.intent.action.receipt.sell.OPENED" -> {
+                receiptStateRepository.onReceiptStateChange(ReceiptState.RECEIPT_OPENED)
                 context.startService(
                     Intent(context, MainService::class.java)
                         .putExtra(MainService.TASK_ID, MainService.UPDATE_TASK_BLOCK)
@@ -53,4 +75,12 @@ class EvoEventsReceiver : BroadcastReceiver() {
             }
         }
     }
+
+    private fun shouldPrintBeforeReceipt(): Boolean =
+        when (repository.getPlacement()) {
+            1 -> false
+            2 -> true
+            else -> false
+        }
+
 }

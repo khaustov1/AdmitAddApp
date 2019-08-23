@@ -1,6 +1,7 @@
 package com.admitad.evo.domain
 
 import android.graphics.Bitmap
+import android.util.Log
 import com.admitad.evo.data.remote.RemoteStatisticsService
 import com.admitad.evo.data.remote.model.TerminalEntity
 import com.admitad.evo.data.remote.model.TerminalStatistic
@@ -29,6 +30,9 @@ class MainPresenterImp : KoinComponent, MainPresenter {
                             repository.updatePicture(it)
                         }
                     }
+                    block.blockPlacement?.let { placement ->
+                        repository.updatePlacement(placement)
+                    }
                     repository.incrementUpdateBlockCounter()
                 } ?: let {
                     repository.incrementUpdateFailureCounter()
@@ -40,14 +44,18 @@ class MainPresenterImp : KoinComponent, MainPresenter {
     }
 
     override fun sendStatistics(terminalId: String) {
-        GlobalScope.launch {
-            val stats = TerminalStatistic(
-                terminalId,
-                repository.getPrintedBlocksCounter(),
-                repository.getUpdateBlockCounter(),
-                repository.getUpdateFailureCounter()
-            )
-            statisticsService.sendStats(stats).execute()
+        try {
+            GlobalScope.launch {
+                val stats = TerminalStatistic(
+                    terminalId,
+                    repository.getPrintedBlocksCounter(),
+                    repository.getUpdateBlockCounter(),
+                    repository.getUpdateFailureCounter()
+                )
+                statisticsService.sendStats(stats).execute()
+            }
+        } catch (e: Exception) {
+            Log.e(this::javaClass.name, e.message)
         }
     }
 

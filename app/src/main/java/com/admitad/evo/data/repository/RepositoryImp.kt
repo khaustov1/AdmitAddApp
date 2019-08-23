@@ -45,6 +45,10 @@ class RepositoryImp : Repository, KoinComponent {
 
     override fun incrementUpdateFailureCounter() = localStorage.incrementUpdateFailureCounter()
 
+    override fun updatePlacement(placement: Int) = localStorage.updatePlacement(placement)
+
+    override fun getPlacement() = localStorage.getPlacement()
+
     override fun getAdvBlock(terminalEntity: TerminalEntity): Call<BlockResponse> =
         remoteAdvBlockDataSource.getAdbBlock(terminalEntity)
 }
