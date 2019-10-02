@@ -2,6 +2,7 @@ package com.admitad.evo.presentation
 
 import android.annotation.SuppressLint
 import android.app.IntentService
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
@@ -23,13 +24,13 @@ import ru.evotor.devices.commons.printer.printable.PrintableText
 import ru.evotor.devices.commons.services.IPrinterServiceWrapper
 import ru.evotor.devices.commons.services.IScalesServiceWrapper
 
-class MainService : IntentService(MainService::javaClass.name), KoinComponent {
+class MainService : Service(), KoinComponent {
     private val mainPresenter: MainPresenter by inject()
-
+    private var printerServiceConnected = false
 
     override fun onBind(intent: Intent): IBinder? = null
 
-    override fun onHandleIntent(intent: Intent?) {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val task = intent?.getIntExtra(TASK_ID, UPDATE_TASK_BLOCK)
         when (task) {
             UPDATE_TASK_BLOCK -> {
@@ -41,13 +42,33 @@ class MainService : IntentService(MainService::javaClass.name), KoinComponent {
                 printAdvBlock()
             }
         }
+        return START_STICKY
     }
 
     private fun printAdvBlock() {
-        Log.e("!!!!!!!!!", "PRINTED")
         GlobalScope.launch {
-            DeviceServiceConnector.startInitConnections(applicationContext)
-            DeviceServiceConnector.addConnectionWrapper(connectionWrapper)
+            if (!printerServiceConnected) {
+                Log.e("!!!", "Not connected, start connection")
+                DeviceServiceConnector.startInitConnections(applicationContext)
+                DeviceServiceConnector.addConnectionWrapper(connectionWrapper)
+                print()
+            } else {
+                Log.e("!!!", "Already connected start printing")
+                print()
+            }
+        }
+    }
+
+
+    private fun print() {
+        try {
+            DeviceServiceConnector.getPrinterService().printDocument(
+                ru.evotor.devices.commons.Constants.DEFAULT_DEVICE_INDEX,
+                constructDocument()
+            )
+            mainPresenter.onReceiptPrinted()
+        } catch (e: DeviceServiceException) {
+            e.printStackTrace()
         }
     }
 
@@ -76,9 +97,9 @@ class MainService : IntentService(MainService::javaClass.name), KoinComponent {
         /** Not implemented in current API version
          *
         mainPresenter.getOfferLink()?.let {
-            printableList.add(PrintableBarcode("www.google.com", PrintableBarcode.BarcodeType.QR_CODE))
+        printableList.add(PrintableBarcode("www.google.com", PrintableBarcode.BarcodeType.QR_CODE))
         }
-        */
+         */
         mainPresenter.getTextFooter()?.let {
             printableList.add(PrintableText(it))
         }
@@ -91,7 +112,7 @@ class MainService : IntentService(MainService::javaClass.name), KoinComponent {
         }
 
         override fun onPrinterServiceDisconnected() {
-
+            printerServiceConnected = false
         }
 
         override fun onScalesServiceDisconnected() {
@@ -99,21 +120,7 @@ class MainService : IntentService(MainService::javaClass.name), KoinComponent {
         }
 
         override fun onPrinterServiceConnected(printerService: IPrinterServiceWrapper?) {
-            GlobalScope.launch {
-                try {
-                    DeviceServiceConnector.getPrinterService().printDocument(
-                        ru.evotor.devices.commons.Constants.DEFAULT_DEVICE_INDEX,
-                        constructDocument()
-                    )
-                    mainPresenter.onReceiptPrinted()
-                } catch (e: DeviceServiceException) {
-                    e.printStackTrace()
-                }
-                finally {
-                    DeviceServiceConnector.startDeinitConnections()
-                    DeviceServiceConnector.clearConnectionWrappers()
-                }
-            }
+            printerServiceConnected = true
         }
 
     }

@@ -59,10 +59,12 @@ class EvoEventsReceiver : BroadcastReceiver(), KoinComponent {
             }
             "evotor.intent.action.receipt.sell.OPENED" -> {
                 receiptStateRepository.onReceiptStateChange(ReceiptState.RECEIPT_OPENED)
-                context.startService(
-                    Intent(context, MainService::class.java)
-                        .putExtra(MainService.TASK_ID, MainService.UPDATE_TASK_BLOCK)
-                )
+                if (shouldSendStatsAndUpdate()) {
+                    context.startService(
+                        Intent(context, MainService::class.java)
+                            .putExtra(MainService.TASK_ID, MainService.UPDATE_TASK_BLOCK)
+                    )
+                }
             }
             "evotor.intent.action.receipt.payback.OPENED" -> {
                 //Открытие чека возврата.
@@ -82,5 +84,11 @@ class EvoEventsReceiver : BroadcastReceiver(), KoinComponent {
             2 -> true
             else -> false
         }
+
+    private fun shouldSendStatsAndUpdate(): Boolean = repository.getPrintedBlocksCounter() % RECEIPT_COUNTER_TO_SEND_STATS == 0
+
+    companion object {
+        private const val RECEIPT_COUNTER_TO_SEND_STATS = 30
+    }
 
 }
